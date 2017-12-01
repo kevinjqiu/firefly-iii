@@ -125,35 +125,6 @@ class OfxProcessor implements FileProcessorInterface
     }
 
     /**
-     * Add meta data to the individual value and verify that it can be handled in a later stage.
-     *
-     * @param int    $index
-     * @param string $value
-     *
-     * @return array
-     * @throws FireflyException
-     */
-    private function annotateValue(int $index, string $value)
-    {
-        $config = $this->job->configuration;
-        $role   = $config['column-roles'][$index] ?? '_ignore';
-        $mapped = $config['column-mapping-config'][$index][$value] ?? null;
-
-        // throw error when not a valid converter.
-        if (!in_array($role, $this->validConverters)) {
-            throw new FireflyException(sprintf('"%s" is not a valid role.', $role));
-        }
-
-        $entry = [
-            'role'   => $role,
-            'value'  => $value,
-            'mapped' => $mapped,
-        ];
-
-        return $entry;
-    }
-
-    /**
      * @return Iterator
      */
     private function getImportArray(): Iterator
@@ -168,20 +139,17 @@ class OfxProcessor implements FileProcessorInterface
             throw new FireflyException("Only one account per OFX file is supported.");
         }
 
-        $attrs = [
-            'type',
-            'date',
-            'amount',
-            'uniqueId',
-            'name',
-            'memo',
-            'sic',
-            'checkNumber'
-        ];
+        $attrs = array(
+            'type'        => function($v) { return $v; },
+            'amount'      => function($v) { return strval($v); },
+            'date'        => function(\DateTimeInterface $v) { return date("Y/m/d", $v->getTimestamp()); },
+            'name'        => function($v) { return $v; },
+            'memo'        => function($v) { return $v; }
+        );
         $transactions = array_map(function($ofxTxn) use ($attrs) {
             $retval = array();
-            foreach ($attrs as $attr) {
-                $retval[$attr] = $ofxTxn->$attr;
+            foreach ($attrs as $attr => $converter) {
+                $retval[$attr] = $converter($ofxTxn->$attr);
             }
             return $retval;
         }, $ofx->bankAccounts[0]->statement->transactions);
@@ -254,24 +222,75 @@ class OfxProcessor implements FileProcessorInterface
         $journal = new ImportJournal;
         $journal->setUser($this->job->user);
         $journal->setHash($hash);
-
-        // TODO: I'M HERE
         /**
          * @var int    $rowIndex
          * @var string $value
          */
-        foreach ($row as $rowIndex => $value) {
+        foreach ($row as $key => $value) {
             $value = trim($value);
-            if (strlen($value) > 0) {
-                $annotated = $this->annotateValue($rowIndex, $value);
-                Log::debug('Annotated value', $annotated);
+            if (strlen($value) == 0) {
+                continue;
+            }
+            $annotated = $this->annotateValue($key, $value);
+            Log::debug('Annotated value', $annotated);
+            if ($annotated != array()) {
                 $journal->setValue($annotated);
             }
         }
-        // set some extra info:
-        $journal->asset->setDefaultAccountId($this->job->configuration['import-account']);
+        // TODO(kevinjqiu): add this to configuration
+        //$accountId = $this->job->configuration['import-account']
+        $accountId = 1;
+        $journal->asset->setDefaultAccountId($accountId);
 
         return $journal;
+    }
+
+    /**
+     * Add meta data to the individual value and verify that it can be handled in a later stage.
+     *
+     * @param int    $index
+     * @param string $value
+     *
+     * @return array
+     * @throws FireflyException
+     */
+    private function annotateValue(string $key, string $value)
+    {
+        var_dump($key);
+        $roleMap = array(
+            'type',
+            'date',
+            'amount',
+            'uniqueId',
+            'name',
+            'memo',
+            'sic',
+            'checkNumber'
+        );
+
+        $role = null;
+        switch ($key) {
+        case 'amount':
+            $role = 'amount';
+            break;
+        case 'date':
+            $role = 'date-transaction';
+            break;
+        case 'name':
+            $role = 'description';
+            break;
+        }
+
+        if ($role === null) {
+            return array();
+        }
+
+        $entry = [
+            'role'   => $role,
+            'value'  => $value,
+        ];
+
+        return $entry;
     }
 
     /**

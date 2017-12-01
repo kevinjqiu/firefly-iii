@@ -181,6 +181,8 @@ class ImportRoutine
         // TODO(kevinjqiu): Add date-format to the ofx configurator?
         if (array_key_exists('date-format', $this->job->configuration)) {
             $storage->setDateFormat($this->job->configuration['date-format']);
+        } else {
+            $storage->setDateFormat("Y/m/d");
         }
         $storage->setObjects($objects);
         $storage->store();
