@@ -178,7 +178,10 @@ class ImportRoutine
     {
         $storage = new ImportStorage;
         $storage->setJob($this->job);
-        $storage->setDateFormat($this->job->configuration['date-format']);
+        // TODO(kevinjqiu): Add date-format to the ofx configurator?
+        if (array_key_exists('date-format', $this->job->configuration)) {
+            $storage->setDateFormat($this->job->configuration['date-format']);
+        }
         $storage->setObjects($objects);
         $storage->store();
         Log::info('Back in storeObjects()');

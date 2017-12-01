@@ -25,7 +25,6 @@ namespace FireflyIII\Import\FileProcessor;
 
 use FireflyIII\Exceptions\FireflyException;
 use FireflyIII\Import\Object\ImportJournal;
-use FireflyIII\Import\Specifics\SpecificInterface;
 use FireflyIII\Models\ImportJob;
 use FireflyIII\Models\TransactionJournalMeta;
 use Illuminate\Support\Collection;
@@ -47,8 +46,6 @@ class OfxProcessor implements FileProcessorInterface
     private $objects;
     /** @var array */
     private $validConverters = [];
-    /** @var array */
-    private $validSpecifics = [];
 
     /**
      * FileProcessorInterface constructor.
@@ -77,30 +74,31 @@ class OfxProcessor implements FileProcessorInterface
 
         $entries = new Collection($this->getImportArray());
         Log::notice('Building importable objects from OFX file.');
-        Log::debug(sprintf('Number of entries: %d', $entries->count()));
-        $notImported = $entries->filter(
-            function (array $row, int $index) {
-                if ($this->rowAlreadyImported($row)) {
-                    $message = sprintf('Row #%d has already been imported.', $index);
-                    $this->job->addError($index, $message);
-                    $this->job->addStepsDone(5); // all steps.
-                    Log::info($message);
+        //Log::debug(sprintf('Number of entries: %d', $entries->count()));
+        //$notImported = $entries->filter(
+        //    function (array $row, int $index) {
+        //        if ($this->rowAlreadyImported($row)) {
+        //            $message = sprintf('Row #%d has already been imported.', $index);
+        //            $this->job->addError($index, $message);
+        //            $this->job->addStepsDone(5); // all steps.
+        //            Log::info($message);
 
-                    return null;
-                }
+        //            return null;
+        //        }
 
-                return $row;
-            }
-        );
-        Log::debug(sprintf('Number of entries left: %d', $notImported->count()));
+        //        return $row;
+        //    }
+        //);
+        //Log::debug(sprintf('Number of entries left: %d', $notImported->count()));
 
-        // set (new) number of steps:
-        $status                     = $this->job->extended_status;
-        $status['steps']            = $notImported->count() * 5;
-        $this->job->extended_status = $status;
-        $this->job->save();
-        Log::debug(sprintf('Number of steps: %d', $notImported->count() * 5));
+        //// set (new) number of steps:
+        //$status                     = $this->job->extended_status;
+        //$status['steps']            = $notImported->count() * 5;
+        //$this->job->extended_status = $status;
+        //$this->job->save();
+        //Log::debug(sprintf('Number of steps: %d', $notImported->count() * 5));
 
+        $notImported = $entries;
         $notImported->each(
             function (array $row, int $index) {
                 $journal = $this->importRow($index, $row);
@@ -161,9 +159,33 @@ class OfxProcessor implements FileProcessorInterface
     private function getImportArray(): Iterator
     {
         $content   = $this->job->uploadFileContents();
-        $config    = $this->job->configuration;
-        $results = array();
-        return $results;
+        $parser = new \OfxParser\Parser();
+        $ofx = $parser->loadFromString($content);
+        if (count($ofx->bankAccounts) == 0) {
+            return new \ArrayIterator(array());
+        }
+        if (count($ofx->bankAccounts) > 1) {
+            throw new FireflyException("Only one account per OFX file is supported.");
+        }
+
+        $attrs = [
+            'type',
+            'date',
+            'amount',
+            'uniqueId',
+            'name',
+            'memo',
+            'sic',
+            'checkNumber'
+        ];
+        $transactions = array_map(function($ofxTxn) use ($attrs) {
+            $retval = array();
+            foreach ($attrs as $attr) {
+                $retval[$attr] = $ofxTxn->$attr;
+            }
+            return $retval;
+        }, $ofx->bankAccounts[0]->statement->transactions);
+        return new \ArrayIterator($transactions);
     }
 
     /**
@@ -228,13 +250,12 @@ class OfxProcessor implements FileProcessorInterface
     private function importRow(int $index, array $row): ImportJournal
     {
         Log::debug(sprintf('Now at row %d', $index));
-        $row  = $this->specifics($row);
         $hash = $this->getRowHash($row);
-
         $journal = new ImportJournal;
         $journal->setUser($this->job->user);
         $journal->setHash($hash);
 
+        // TODO: I'M HERE
         /**
          * @var int    $rowIndex
          * @var string $value
@@ -273,35 +294,6 @@ class OfxProcessor implements FileProcessorInterface
         }
 
         return false;
-
-    }
-
-    /**
-     * And this is the point where the specifix go to work.
-     *
-     * @param array $row
-     *
-     * @return array
-     * @throws FireflyException
-     */
-    private function specifics(array $row): array
-    {
-        $config = $this->job->configuration;
-        $names  = array_keys($config['specifics']);
-        foreach ($names as $name) {
-
-            if (!in_array($name, $this->validSpecifics)) {
-                throw new FireflyException(sprintf('"%s" is not a valid class name', $name));
-            }
-
-            /** @var SpecificInterface $specific */
-            $specific = app('FireflyIII\Import\Specifics\\' . $name);
-
-            // it returns the row, possibly modified:
-            $row = $specific->run($row);
-        }
-
-        return $row;
 
     }
 }
