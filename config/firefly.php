@@ -42,12 +42,15 @@ return [
     ],
     'import_formats'             => [
         'csv' => 'FireflyIII\Import\Configurator\CsvConfigurator',
+        'ofx' => 'FireflyIII\Import\Configurator\OfxConfigurator',
     ],
     'import_configurators'       => [
         'csv' => 'FireflyIII\Import\Configurator\CsvConfigurator',
+        'ofx' => 'FireflyIII\Import\Configurator\OfxConfigurator',
     ],
     'import_processors'          => [
         'csv' => 'FireflyIII\Import\FileProcessor\CsvProcessor',
+        'ofx' => 'FireflyIII\Import\FileProcessor\OfxProcessor',
     ],
     'import_pre'                 => [
         'bunq' => 'FireflyIII\Support\Import\Prerequisites\BunqPrerequisites',

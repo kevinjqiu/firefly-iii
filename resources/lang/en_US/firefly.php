@@ -1021,6 +1021,7 @@ return [
 
     // supported file types:
     'import_file_type_csv'                  => 'CSV (comma separated values)',
+    'import_file_type_ofx'                  => 'OFX (open financial exchange)',
 
     // import configuration routine:
     'import_config_sub_title'               => 'Set up your import file',
