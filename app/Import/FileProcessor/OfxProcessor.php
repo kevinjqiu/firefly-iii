@@ -74,29 +74,23 @@ class OfxProcessor implements FileProcessorInterface
 
         $entries = new Collection($this->getImportArray());
         Log::notice('Building importable objects from OFX file.');
-        //Log::debug(sprintf('Number of entries: %d', $entries->count()));
-        //$notImported = $entries->filter(
-        //    function (array $row, int $index) {
-        //        if ($this->rowAlreadyImported($row)) {
-        //            $message = sprintf('Row #%d has already been imported.', $index);
-        //            $this->job->addError($index, $message);
-        //            $this->job->addStepsDone(5); // all steps.
-        //            Log::info($message);
+        Log::debug(sprintf('Number of entries: %d', $entries->count()));
+        $notImported = $entries->filter(
+            function (array $row, int $index) {
+                if ($this->rowAlreadyImported($row)) {
+                    $message = sprintf('Row #%d has already been imported.', $index);
+                    $this->job->addError($index, $message);
+                    $this->job->addStepsDone(5); // all steps.
+                    Log::info($message);
 
-        //            return null;
-        //        }
+                    return null;
+                }
 
-        //        return $row;
-        //    }
-        //);
-        //Log::debug(sprintf('Number of entries left: %d', $notImported->count()));
+                return $row;
+            }
+        );
 
-        //// set (new) number of steps:
-        //$status                     = $this->job->extended_status;
-        //$status['steps']            = $notImported->count() * 5;
-        //$this->job->extended_status = $status;
-        //$this->job->save();
-        //Log::debug(sprintf('Number of steps: %d', $notImported->count() * 5));
+        Log::debug(sprintf('Number of entries left: %d', $notImported->count()));
 
         $notImported = $entries;
         $notImported->each(
@@ -256,7 +250,6 @@ class OfxProcessor implements FileProcessorInterface
      */
     private function annotateValue(string $key, string $value)
     {
-        var_dump($key);
         $roleMap = array(
             'type',
             'date',

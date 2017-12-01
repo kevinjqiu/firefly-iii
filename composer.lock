@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "e7387ac4520e21aa1291daf6dc2f5907",
+    "content-hash": "172bdc9b82e3bab30080b3090f55350b",
     "packages": [
         {
             "name": "asgrim/ofxparser",
-            "version": "1.2.1",
+            "version": "dev-fix-amount-conversion",
             "source": {
                 "type": "git",
-                "url": "https://github.com/asgrim/ofxparser.git",
-                "reference": "8ba143295be666ae2cac05674f7d526d8e0ebed7"
+                "url": "https://github.com/enobrev/ofxparser.git",
+                "reference": "eeb5db73367484d526b16ed27b7e49e52e20cbb4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/asgrim/ofxparser/zipball/8ba143295be666ae2cac05674f7d526d8e0ebed7",
-                "reference": "8ba143295be666ae2cac05674f7d526d8e0ebed7",
+                "url": "https://api.github.com/repos/enobrev/ofxparser/zipball/eeb5db73367484d526b16ed27b7e49e52e20cbb4",
+                "reference": "eeb5db73367484d526b16ed27b7e49e52e20cbb4",
                 "shasum": ""
             },
             "require": {
@@ -33,7 +33,6 @@
                     "OfxParser": "lib/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -60,7 +59,10 @@
                 "open financial exchange",
                 "parser"
             ],
-            "time": "2016-09-26T11:36:23+00:00"
+            "support": {
+                "source": "https://github.com/enobrev/ofxparser/tree/fix-amount-conversion"
+            },
+            "time": "2016-12-28T16:36:56+00:00"
         },
         {
             "name": "bacon/bacon-qr-code",
@@ -5322,7 +5324,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "asgrim/ofxparser": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

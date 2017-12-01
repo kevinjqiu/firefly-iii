@@ -53,7 +53,7 @@
     "ext-intl": "*",
     "ext-mbstring": "*",
     "ext-zip": "*",
-    "asgrim/ofxparser": "^1.2",
+    "asgrim/ofxparser": "dev-fix-amount-conversion",
     "bacon/bacon-qr-code": "1.*",
     "davejamesmiller/laravel-breadcrumbs": "3.*",
     "doctrine/dbal": "^2.5",
@@ -122,6 +122,13 @@
   "config": {
     "preferred-install": "dist",
     "sort-packages": true,
-    "optimize-autoloader": true
-  }
+    "optimize-autoloader": true,
+    "minimum-stability": "dev"
+  },
+  "repositories": [
+      {
+          "type": "vcs",
+          "url": "https://github.com/enobrev/ofxparser"
+      }
+  ]
 }
