@@ -232,8 +232,8 @@ class OfxProcessor implements FileProcessorInterface
             }
         }
         // TODO(kevinjqiu): add this to configuration
-        //$accountId = $this->job->configuration['import-account']
-        $accountId = 1;
+        $accountId = $this->job->configuration['import-account'];
+        //$accountId = 1;
         $journal->asset->setDefaultAccountId($accountId);
 
         return $journal;
